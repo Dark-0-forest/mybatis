@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.acowzon.dao.GoodsMapper">
+
+    <!--排序的sql片段:默认排序方式-->
+    <sql id="OrderByDefault">
+        order by views, goods_stars_count, sold_count, comment_count, goods_price
+    </sql>
+    <!--排序的sql片段:评论数排序方式-->
+    <sql id="OrderByComment">
+        order by comment_count, views, goods_stars_count, sold_count, goods_price
+    </sql>
+    <!--排序的sql片段:价格排序方式-->
+    <sql id="OrderByPrice">
+        order by goods_price, views, goods_stars_count, sold_count, comment_count
+    </sql>
+    <!--排序的sql片段:喜爱数排序方式-->
+    <sql id="OrderByStars">
+        order by goods_stars_count, views, sold_count, comment_count, goods_price
+    </sql>
+    <!--排序的sql片段:销量排序方式-->
+    <sql id="OrderBySoldCount">
+        order by sold_count, views, goods_stars_count, comment_count, goods_price
+    </sql>
+
+
+
+    <!--查询所有的商品-->
+    <select id="getAllGoods" resultType="goods">
+        select * from goods
+        <include refid="OrderByDefault"/>
+    </select>
+
+    <!--根据指定的类别来查找商品-->
+    <select id="getGoodsByType" resultType="goods">
+        select * from goods where goods_type = #{type}
+        <include refid="OrderByDefault"/>
+    </select>
+
+    <!--根据map中的条件来查找商品-->
+    <select id="queryGoodsByMap" resultType="goods" parameterType="map">
+        select * from goods
+        <where>
+            <if test="goodsName != null">  and goods_name like #{goodsName}   </if>
+            <if test="maxPrice != null and minPrice != null">  and goods_price between #{minPrice} and #{maxPrice}   </if>
+            <if test="goodType != null">  and goods_type = #{goodType}  </if>
+        </where>
+
+        <choose>
+            <when test="orderMethod == 'comment'">  <include refid="OrderByComment"/>  </when>
+            <when test="orderMethod == 'price'">  <include refid="OrderByPrice"/>  </when>
+            <when test="orderMethod == 'stars'">  <include refid="OrderByStars"/>  </when>
+            <when test="orderMethod == 'soldCount'">  <include refid="OrderBySoldCount"/>  </when>
+            <otherwise> <include refid="OrderByDefault"/>   </otherwise>
+        </choose>
+
+    </select>
+
+    <!--根据id来查找商品-->
+    <select id="getGoodsById" resultType="goods">
+        select * from goods where goods_id = #{id}
+    </select>
+
+    <!--添加一个商品-->
+    <insert id="addGoods" parameterType="Goods">
+        insert into goods(goods_name, goods_type, goods_price,goods_image, goods_simple_des,
+        goods_description, goods_inventory, retailer_id, is_free_shipping, create_time, update_time)
+        values(#{goodsName}, #{goodsType}, #{goodsPrice}, #{goodsImage}, #{goodsSimpleDes}, #{goodsDescription},
+        #{goodsInventory}, #{retailerId}, #{isFreeShipping}, #{createTime}, #{updateTime})
+    </insert>
+
+    <!--商品的浏览数views增加-->
+    <update id="addViews">
+        update goods set views = views+1 where goods_id = #{id}
+    </update>
+
+    <!--商品的喜爱数增加-->
+    <update id="addStars">
+        update goods set goods_stars_count = goods_stars_count+1 where goods_id = #{id}
+    </update>
+
+    <!--为指定商品增加销量-->
+    <update id="addSoldCount">
+        update goods set sold_count = sold_count + #{count} where goods_id = #{id}
+    </update>
+
+</mapper>
